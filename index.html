@@ -5,8 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Wedding Photo Sharing</title>
   <style>
-    body { max-width: 900px; margin: auto; font-family: Arial, sans-serif; padding: 1em; }
-    h1 { text-align: center; }
+    body {
+      max-width: 900px;
+      margin: auto;
+      font-family: Arial, sans-serif;
+      padding: 1em;
+    }
+    h1 {
+      text-align: center;
+    }
     #gallery {
       display: flex;
       flex-wrap: wrap;
@@ -60,18 +67,17 @@
       let failure = 0;
 
       for (const file of files) {
-        let formData = new FormData();
+        const formData = new FormData();
         formData.append('file', file);
         formData.append('upload_preset', UPLOAD_PRESET);
-        formData.append('tags', 'wedding-2025'); // Important: Tag uploads with your shared tag
+        formData.append('tags', 'wedding-2025'); // Tag uploaded files for shared gallery
 
         try {
-          let response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
+          const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
             method: 'POST',
             body: formData,
           });
-          let data = await response.json();
-
+          const data = await response.json();
           if (data.secure_url) {
             addMediaToGallery(data.secure_url, data.resource_type);
             success++;
@@ -79,8 +85,8 @@
             failure++;
           }
         } catch (error) {
-          console.error('Upload error:', error);
           failure++;
+          console.error('Upload failed:', error);
         }
       }
 
@@ -90,16 +96,16 @@
     }
 
     function addMediaToGallery(url, resourceType) {
+      let media;
       if (resourceType === 'video') {
-        const video = document.createElement('video');
-        video.src = url;
-        video.controls = true;
-        gallery.prepend(video);
+        media = document.createElement('video');
+        media.src = url;
+        media.controls = true;
       } else {
-        const img = document.createElement('img');
-        img.src = url;
-        gallery.prepend(img);
+        media = document.createElement('img');
+        media.src = url;
       }
+      gallery.prepend(media);
     }
   </script>
 </body>
