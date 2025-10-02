@@ -5,90 +5,102 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Wedding Photo Sharing</title>
   <style>
-    body { max-width: 800px; margin: auto; font-family: Arial, sans-serif; padding: 1em; }
+    body { max-width: 900px; margin: auto; font-family: Arial, sans-serif; padding: 1em; }
     h1 { text-align: center; }
-    #gallery img { max-width: 250px; margin: 10px; border-radius: 12px; cursor: pointer; }
+    #gallery {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 1em;
+    }
+    #gallery img, #gallery video {
+      max-width: 300px;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+      transition: transform 0.2s ease;
+    }
+    #gallery img:hover, #gallery video:hover {
+      transform: scale(1.05);
+    }
+    button, input[type=file] {
+      margin: 0.5em;
+      padding: 0.6em 1em;
+      font-size: 1em;
+      cursor: pointer;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
   </style>
 </head>
 <body>
+  <h1>Wedding Photo Sharing</h1>
 
-<h1>Wedding Photo Sharing</h1>
+  <input type="file" id="fileInput" multiple accept="image/*,video/*" />
+  <button onclick="uploadFiles()">Upload Photos & Videos</button>
+  <button onclick="window.open('https://res.cloudinary.com/ddvp37mb1/image/list/wedding-2025','_blank')">See What Others Have Uploaded</button>
 
-<input type="file" id="fileInput" multiple accept="image/*" />
-<button onclick="uploadPhotos()">Upload Photos</button>
+  <div id="gallery"></div>
 
-<div id="gallery"></div>
+  <script>
+    const CLOUD_NAME = 'ddvp37mb1';
+    const UPLOAD_PRESET = 'Wedding QR-Code';
+    const gallery = document.getElementById('gallery');
+    const fileInput = document.getElementById('fileInput');
 
-<script>
-  const CLOUD_NAME = 'ddvp37mb1';
-  const UPLOAD_PRESET = 'Wedding QR-Code';
+    async function uploadFiles() {
+      const files = fileInput.files;
+      if (files.length === 0) {
+        alert('Please select photos or videos to upload.');
+        return;
+      }
 
-  const gallery = document.getElementById('gallery');
-  const fileInput = document.getElementById('fileInput');
+      let success = 0;
+      let failure = 0;
 
-  // Shared gallery data URL (This must be updated to your hosted JSON file URL)
-  const SHARED_GALLERY_JSON = "https://YOUR_STORAGE_OR_BACKEND_URL/gallery.json";
+      for (const file of files) {
+        let formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', UPLOAD_PRESET);
+        formData.append('tags', 'wedding-2025'); // Important: Tag uploads with your shared tag
 
-  // Upload multiple photos
-  async function uploadPhotos() {
-    const files = fileInput.files;
-    if (!files.length) {
-      alert('Please select photos before uploading.');
-      return;
+        try {
+          let response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
+            method: 'POST',
+            body: formData,
+          });
+          let data = await response.json();
+
+          if (data.secure_url) {
+            addMediaToGallery(data.secure_url, data.resource_type);
+            success++;
+          } else {
+            failure++;
+          }
+        } catch (error) {
+          console.error('Upload error:', error);
+          failure++;
+        }
+      }
+
+      alert(`Upload complete. Success: ${success}, Failed: ${failure}`);
+
+      fileInput.value = '';
     }
 
-    const uploadedUrls = [];
-
-    for (const file of files) {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', UPLOAD_PRESET);
-
-      try {
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
-          method: 'POST',
-          body: formData,
-        });
-        const data = await res.json();
-        uploadedUrls.push(data.secure_url);
-        addImageToGallery(data.secure_url);
-      } catch (error) {
-        console.error('Upload failed:', error);
+    function addMediaToGallery(url, resourceType) {
+      if (resourceType === 'video') {
+        const video = document.createElement('video');
+        video.src = url;
+        video.controls = true;
+        gallery.prepend(video);
+      } else {
+        const img = document.createElement('img');
+        img.src = url;
+        gallery.prepend(img);
       }
     }
-
-    // Save to shared gallery (backend needed to store URLs, skipped here)
-    // Example: POST uploadedUrls to your backend API or update your JSON file
-
-    fileInput.value = '';
-  }
-
-  // Add single image to gallery div
-  function addImageToGallery(url) {
-    const img = document.createElement('img');
-    img.src = url;
-    gallery.prepend(img);
-  }
-
-  // Load shared gallery images from a JSON (Requires backend or file hosting that you update manually or automatically)
-  async function loadGallery() {
-    try {
-      const res = await fetch(SHARED_GALLERY_JSON);
-      if (!res.ok) throw new Error('Gallery not found');
-      const urls = await res.json();
-      gallery.innerHTML = '';
-      urls.forEach(url => addImageToGallery(url));
-    } catch (error) {
-      console.log('Could not load shared gallery:', error.message);
-      // If fails, fallback or load local storage gallery
-    }
-  }
-
-  loadGallery();
-
-</script>
-
+  </script>
 </body>
 </html>
-
-
