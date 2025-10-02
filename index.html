@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wedding Photo Share</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 1em; }
+    h1 { text-align: center; }
+    #gallery img { max-width: 100px; margin: 5px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Wedding Photo Share</h1>
+  <input type="file" id="fileInput" multiple />
+  <button onclick="uploadPhotos()">Upload Photos</button>
+  <div id="gallery"></div>
+
+  <script>
+    const gallery = document.getElementById('gallery');
+    const fileInput = document.getElementById('fileInput');
+
+    // Display selected images in gallery preview
+    fileInput.addEventListener('change', () => {
+      gallery.innerHTML = '';
+      for (const file of fileInput.files) {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        gallery.appendChild(img);
+      }
+    });
+
+    async function uploadPhotos() {
+      alert('Uploading photos needs backend service which GitHub Pages alone cannot provide. To keep it free, proceed to Step 3 to set up free image hosting with Cloudinary or similar.');
+    }
+  </script>
+</body>
+</html>
