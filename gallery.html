@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wedding Photo Gallery</title>
+  <style>
+    body { max-width: 900px; margin: auto; font-family: Arial, sans-serif; padding: 1em; }
+    h1 { text-align: center; }
+    #gallery { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-top: 1em; }
+    img, video { max-width: 300px; border-radius: 12px; box-shadow: 0 3px 8px rgba(0,0,0,0.2); cursor: pointer; }
+    video { max-height: 180px; }
+  </style>
+</head>
+<body>
+  <h1>Wedding Photo Gallery</h1>
+  <div id="gallery">Loading photos...</div>
+
+  <script>
+    const gallery = document.getElementById('gallery');
+    const cloudName = 'ddvp37mb1';
+    const tag = 'wedding-2025';
+    const jsonUrl = `https://res.cloudinary.com/${cloudName}/image/list/${tag}.json`;
+
+    async function loadGallery() {
+      try {
+        const response = await fetch(jsonUrl);
+        const data = await response.json();
+
+        if (!data.resources || data.resources.length === 0) {
+          gallery.textContent = 'No photos uploaded yet.';
+          return;
+        }
+
+        gallery.innerHTML = '';
+        data.resources.forEach(resource => {
+          const url = `https://res.cloudinary.com/${cloudName}/${resource.resource_type}/upload/v${resource.version}/${resource.public_id}.${resource.format}`;
+          if (resource.resource_type === 'video') {
+            const video = document.createElement('video');
+            video.src = url;
+            video.controls = true;
+            gallery.appendChild(video);
+          } else {
+            const img = document.createElement('img');
+            img.src = url;
+            img.alt = 'Wedding Photo';
+            gallery.appendChild(img);
+          }
+        });
+      } catch (error) {
+        gallery.textContent = 'Failed to load photos.';
+        console.error(error);
+      }
+    }
+
+    loadGallery();
+  </script>
+</body>
+</html>
