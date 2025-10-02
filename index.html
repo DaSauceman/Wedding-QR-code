@@ -3,36 +3,83 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Wedding Photo Share</title>
+  <title>Wedding Photo Sharing</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 1em; }
+    body { max-width: 600px; margin: auto; font-family: Arial, sans-serif; padding: 1em; }
     h1 { text-align: center; }
-    #gallery img { max-width: 100px; margin: 5px; cursor: pointer; }
+    #gallery img { max-width: 100px; margin: 5px; border-radius: 10px; cursor: pointer; }
   </style>
 </head>
 <body>
-  <h1>Wedding Photo Share</h1>
-  <input type="file" id="fileInput" multiple />
+
+  <h1>Wedding Photo Sharing</h1>
+
+  <input type="file" id="fileInput" multiple accept="image/*" />
   <button onclick="uploadPhotos()">Upload Photos</button>
+
   <div id="gallery"></div>
 
   <script>
+    const CLOUD_NAME = 'ddvp37mb1';
+    const UPLOAD_PRESET = 'Wedding QR-Code';
+
     const gallery = document.getElementById('gallery');
     const fileInput = document.getElementById('fileInput');
 
-    // Display selected images in gallery preview
-    fileInput.addEventListener('change', () => {
+    // Retrieve saved images from localStorage (per browser)
+    function loadGallery() {
+      const images = JSON.parse(localStorage.getItem('weddingPhotos') || '[]');
       gallery.innerHTML = '';
-      for (const file of fileInput.files) {
+      images.forEach(url => {
         const img = document.createElement('img');
-        img.src = URL.createObjectURL(file);
+        img.src = url;
         gallery.appendChild(img);
-      }
-    });
-
-    async function uploadPhotos() {
-      alert('Uploading photos needs backend service which GitHub Pages alone cannot provide. To keep it free, proceed to Step 3 to set up free image hosting with Cloudinary or similar.');
+      });
     }
+
+    // Save image URLs locally
+    function saveImageUrl(url) {
+      let images = JSON.parse(localStorage.getItem('weddingPhotos') || '[]');
+      images.unshift(url);
+      localStorage.setItem('weddingPhotos', JSON.stringify(images));
+    }
+
+    // Upload selected photos to Cloudinary
+    async function uploadPhotos() {
+      if (!fileInput.files.length) {
+        alert('Please select photos before uploading.');
+        return;
+      }
+      for (const file of fileInput.files) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', UPLOAD_PRESET);
+
+        try {
+          const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
+            method: 'POST',
+            body: formData
+          });
+          const data = await res.json();
+          saveImageUrl(data.secure_url);
+          addImageToGallery(data.secure_url);
+        } catch (error) {
+          console.error('Upload failed:', error);
+        }
+      }
+      fileInput.value = '';
+    }
+
+    // Add a newly uploaded image to the gallery section
+    function addImageToGallery(url) {
+      const img = document.createElement('img');
+      img.src = url;
+      gallery.prepend(img);
+    }
+
+    loadGallery();
+
   </script>
+
 </body>
 </html>
