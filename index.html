@@ -1,85 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Wedding Photo Sharing</title>
-  <style>
-    body { max-width: 600px; margin: auto; font-family: Arial, sans-serif; padding: 1em; }
-    h1 { text-align: center; }
-    #gallery img { max-width: 100px; margin: 5px; border-radius: 10px; cursor: pointer; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wedding Photo Sharing</title>
+<style>
+  body { max-width: 600px; margin: auto; font-family: Arial, sans-serif; padding: 1em; }
+  h1 { text-align: center; }
+  #gallery img { max-width: 100px; margin: 5px; border-radius: 10px; cursor: pointer; }
+</style>
 </head>
 <body>
 
-  <h1>Wedding Photo Sharing</h1>
+<h1>Wedding Photo Sharing</h1>
 
-  <input type="file" id="fileInput" multiple accept="image/*" />
-  <button onclick="uploadPhotos()">Upload Photos</button>
+<input type="file" id="fileInput" multiple accept="image/*" />
+<button onclick="uploadPhotos()">Upload Photos</button>
 
-  <div id="gallery"></div>
+<div id="gallery"></div>
 
-  <script>
-    const CLOUD_NAME = 'ddvp37mb1';
-    const UPLOAD_PRESET = 'Wedding QR-Code';
+<script>
+const CLOUD_NAME = 'ddvp37mb1';
+const UPLOAD_PRESET = 'Wedding QR-Code';
 
-    const gallery = document.getElementById('gallery');
-    const fileInput = document.getElementById('fileInput');
+const gallery = document.getElementById('gallery');
+const fileInput = document.getElementById('fileInput');
 
-    // Retrieve saved images from localStorage (per browser)
-    function loadGallery() {
-      const images = JSON.parse(localStorage.getItem('weddingPhotos') || '[]');
-      gallery.innerHTML = '';
-      images.forEach(url => {
-        const img = document.createElement('img');
-        img.src = url;
-        gallery.appendChild(img);
+function loadGallery() {
+  const images = JSON.parse(localStorage.getItem('weddingPhotos') || '[]');
+  gallery.innerHTML = '';
+  images.forEach(url => {
+    const img = document.createElement('img');
+    img.src = url;
+    gallery.appendChild(img);
+  });
+}
+
+function saveImageUrl(url) {
+  let images = JSON.parse(localStorage.getItem('weddingPhotos') || '[]');
+  images.unshift(url);
+  localStorage.setItem('weddingPhotos', JSON.stringify(images));
+}
+
+async function uploadPhotos() {
+  if (!fileInput.files.length) {
+    alert('Please select photos before uploading.');
+    return;
+  }
+  for (const file of fileInput.files) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', UPLOAD_PRESET);
+
+    try {
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
+        method: 'POST',
+        body: formData,
       });
+      const data = await res.json();
+      saveImageUrl(data.secure_url);
+      addImageToGallery(data.secure_url);
+    } catch (error) {
+      console.error('Upload failed:', error);
     }
+  }
+  fileInput.value = '';
+}
 
-    // Save image URLs locally
-    function saveImageUrl(url) {
-      let images = JSON.parse(localStorage.getItem('weddingPhotos') || '[]');
-      images.unshift(url);
-      localStorage.setItem('weddingPhotos', JSON.stringify(images));
-    }
+function addImageToGallery(url) {
+  const img = document.createElement('img');
+  img.src = url;
+  gallery.prepend(img);
+}
 
-    // Upload selected photos to Cloudinary
-    async function uploadPhotos() {
-      if (!fileInput.files.length) {
-        alert('Please select photos before uploading.');
-        return;
-      }
-      for (const file of fileInput.files) {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', UPLOAD_PRESET);
-
-        try {
-          const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
-            method: 'POST',
-            body: formData
-          });
-          const data = await res.json();
-          saveImageUrl(data.secure_url);
-          addImageToGallery(data.secure_url);
-        } catch (error) {
-          console.error('Upload failed:', error);
-        }
-      }
-      fileInput.value = '';
-    }
-
-    // Add a newly uploaded image to the gallery section
-    function addImageToGallery(url) {
-      const img = document.createElement('img');
-      img.src = url;
-      gallery.prepend(img);
-    }
-
-    loadGallery();
-
-  </script>
+loadGallery();
+</script>
 
 </body>
 </html>
+
