@@ -1,122 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Wedding Photo Sharing</title>
-  <style>
-    body {
-      max-width: 900px;
-      margin: auto;
-      font-family: Arial, sans-serif;
-      padding: 1em;
-    }
-    h1 {
-      text-align: center;
-    }
-    #gallery {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 15px;
-      margin-top: 1em;
-    }
-    #gallery img, #gallery video {
-      max-width: 300px;
-      border-radius: 12px;
-      cursor: pointer;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.2);
-      transition: transform 0.2s ease;
-    }
-    #gallery img:hover, #gallery video:hover {
-      transform: scale(1.05);
-    }
-    button, input[type=file] {
-      margin: 0.5em;
-      padding: 0.6em 1em;
-      font-size: 1em;
-      cursor: pointer;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-    #uploadStatus {
-      font-weight: bold;
-      margin-top: 10px;
-      color: #0077cc;
-      text-align: center;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wedding Photo Upload</title>
+<style>
+  body { max-width: 900px; margin: auto; font-family: Arial, sans-serif; padding: 1em; }
+  button, input[type=file] { margin: 0.5em; padding: 0.6em 1em; font-size: 1em; }
+  #uploadStatus { font-weight: bold; margin-top: 10px; color: #0077cc; text-align: center; }
+</style>
 </head>
 <body>
-  <h1>Wedding Photo Sharing</h1>
-
+  <h1>Upload Your Wedding Photos & Videos</h1>
   <input type="file" id="fileInput" multiple accept="image/*,video/*" />
-  <button onclick="uploadFiles()">Upload Photos & Videos</button>
-  <button onclick="window.open('gallery.html','_self')">See What Others Have Uploaded</button>
-
+  <br/>
+  <button onclick="uploadFiles()">Upload</button>
+  <button onclick="window.location.href='gallery.html'">See What Others Have Uploaded</button>
   <div id="uploadStatus"></div>
-  <div id="gallery"></div>
 
   <script>
-    const CLOUD_NAME = 'ddvp37mb1';
-    const UPLOAD_PRESET = 'Wedding QR-Code';
-    const gallery = document.getElementById('gallery');
+    const cloudName = 'ddvp37mb1';
+    const uploadPreset = 'Wedding QR-Code';
     const fileInput = document.getElementById('fileInput');
     const uploadStatus = document.getElementById('uploadStatus');
 
     async function uploadFiles() {
-      const files = fileInput.files;
-      if (files.length === 0) {
-        uploadStatus.textContent = 'Please select photos or videos to upload.';
+      if (fileInput.files.length === 0) {
+        uploadStatus.textContent = 'Please choose photos or videos to upload.';
         return;
       }
 
       uploadStatus.textContent = 'Please wait while uploading photos...';
-      let success = 0;
-      let failure = 0;
+      let successCount = 0;
+      let failCount = 0;
 
-      for (const file of files) {
+      for (const file of fileInput.files) {
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('upload_preset', UPLOAD_PRESET);
+        formData.append('upload_preset', uploadPreset);
         formData.append('tags', 'wedding-2025');
 
         try {
-          const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
+          const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/upload`, {
             method: 'POST',
-            body: formData,
+            body: formData
           });
-          const data = await response.json();
+          const data = await res.json();
           if (data.secure_url) {
-            addMediaToGallery(data.secure_url, data.resource_type);
-            success++;
+            successCount++;
           } else {
-            failure++;
+            failCount++;
           }
-        } catch (error) {
-          failure++;
-          console.error('Upload failed:', error);
+        } catch (err) {
+          failCount++;
+          console.error('Upload error:', err);
         }
       }
 
-      uploadStatus.textContent = `Upload complete. Success: ${success}, Failed: ${failure}`;
-
+      uploadStatus.textContent = `Upload complete. Success: ${successCount}, Failed: ${failCount}`;
       fileInput.value = '';
-    }
-
-    function addMediaToGallery(url, resourceType) {
-      let media;
-      if (resourceType === 'video') {
-        media = document.createElement('video');
-        media.src = url;
-        media.controls = true;
-      } else {
-        media = document.createElement('img');
-        media.src = url;
-      }
-      gallery.prepend(media);
     }
   </script>
 </body>
 </html>
-
